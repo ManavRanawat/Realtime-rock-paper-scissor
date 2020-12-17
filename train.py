@@ -11,35 +11,42 @@ import cv2
 import os
 import sys
 
+#one hot encoding of each label
 rps_to_vector= {
         'rock' : np.array([1,0,0]),
         'paper' : np.array([0,1,0]),
-        'scssors' : np.array([0,0,1])
+        'scissors' : np.array([0,0,1])
     }
 
+# make sure this has your current directory path
 current_dir = os.getcwd()
 # path = SAVE_PATH = os.path.join(current_dir, sys.arg[1]) #path to which folder to go(like RPS)
 
+
 imglist = list()
 
-
+#labeling each data to its enconding vector
 for dr in os.listdir(current_dir) :
     if dr not in ['rock','paper','scissors'] :
         continue
+    # here dr will be the images folder(i.e. rock or paper or scissors)
     vec = rps_to_vector[dr]
     ctr = 0
     for img in os.listdir(os.path.join(current_dir,dr)) :
+    	# make sure the path is correct
         dr_img = dr + "\\"
         path = os.path.join(current_dir,dr_img+img)
-        print(os.getcwd())
+        # print(os.getcwd())
         pic = cv2.imread(path)
+        # doing some data augmentation and creating more data
         pic = cv2.resize(pic,(300,300))
         imglist.append([pic,vec])
         imglist.append([cv2.flip(pic,1),vec])
         imglist.append([cv2.resize(pic[50:250,50:250],(300,300)),vec])
-        ctr = ctr + 3
-    print(dr,ctr)
-    
+        # ctr = ctr + 3	#counting the number of image for each label(uncomment this and next line if you want.)
+    # print(dr,ctr)
+
+#shuffling our data randomly
 np.random.shuffle(imglist)
 
 img, label = map(list, zip(*imglist)) 
@@ -47,6 +54,7 @@ img, label = map(list, zip(*imglist))
 img = np.array(img)
 label = np.array(label)
 
+#Uncomment this if you want to see any image and its label. Your can play around and change the numbers ;)
 # =============================================================================
 # 
 # cv2.imshow('img',imglist[-1][0])
@@ -57,6 +65,7 @@ label = np.array(label)
 # =============================================================================
         
 
+#creating our model now
 from keras import layers
 from keras.layers import Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D
 from keras.models import Sequential, load_model
@@ -65,6 +74,7 @@ from keras.optimizers import Adam
 from keras.applications import DenseNet121
 from keras.callbacks import EarlyStopping,ModelCheckpoint      
 
+#using transfer learning on DenseNet121.(you can also use some other model if you want to(just checkout keras.application on keras documentation))
 base_model = DenseNet121(include_top = False ,weights = 'imagenet',classes = 3,input_shape = (300,300,3))
 base_model.trainable = True
 
@@ -75,7 +85,9 @@ model.add(Flatten())
 model.add(Dense(3,activation = 'softmax'))
 model.compile(optimizer = Adam(),loss = 'categorical_crossentropy',metrics = ['acc'])
 
+#storing the models weight in a file
 filepath="weights-improvement-{epoch:02d}-{val_acc:.2f}.h5"
+
 callback = [
     ModelCheckpoint(
         filepath, 
@@ -84,29 +96,11 @@ callback = [
         save_best_only=True, 
         save_weights_only=True,
         mode='auto'
-    )
-,
+    ),
     EarlyStopping(patience = 2)
-# ,
-#     EpochCheckpoint(args["checkpoints"], every=2,startAt=args["start_epoch"]),
-    
-# 	TrainingMonitor(plotPath,
-# 	jsonPath=jsonPath,
-# 		startAt=args["start_epoch"])
     ]
 
 
-
-# =============================================================================
-# 
-# with open('model.json', 'r') as f:
-#     loaded_model_json = f.read()
-# loaded_model = model_from_json(loaded_model_json)
-# loaded_model.load_weights("weights-improvement-03-0.74.h5")
-# 
-# loaded_model.compile(optimizer = Adam(),loss = 'categorical_crossentropy',metrics = ['acc'])
-# 
-# =============================================================================
 history = model.fit(
     x = img,
     y = label,
@@ -116,7 +110,7 @@ history = model.fit(
     validation_split = 0.2
     )
 
-
+#Uncomment this if you want to checkout how your model performed
 # =============================================================================
 # 
 # preds = model.evaluate(x=img,y=label)
@@ -124,9 +118,9 @@ history = model.fit(
 # print ("Loss = " + str(preds[0]))
 # print ("Test Accuracy = " + str(preds[1]))
 # 
-# 
 # =============================================================================
 
+#And finally, saving the model
 model.save_weights('rps-model.h5')
 
 with open("rps-model.json", "w") as json_file:
