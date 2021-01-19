@@ -44,7 +44,6 @@ while(1):
         img_counter += 1
     if img_counter>= int(max_img) :
         break
-        
-    
+
 cap.release()
 cv2.destroyAllWindows()

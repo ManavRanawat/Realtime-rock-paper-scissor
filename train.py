@@ -30,6 +30,7 @@ for dr in os.listdir(current_dir) :
     if dr not in ['rock','paper','scissors'] :
         continue
     # here dr will be the images folder(i.e. rock or paper or scissors)
+    
     vec = rps_to_vector[dr]
     ctr = 0
     for img in os.listdir(os.path.join(current_dir,dr)) :
@@ -54,7 +55,7 @@ img, label = map(list, zip(*imglist))
 img = np.array(img)
 label = np.array(label)
 
-#Uncomment this if you want to see any image and its label. Your can play around and change the numbers ;)
+#Uncomment below part if you want to see any image and its label. Your can play around and change the numbers ;)
 # =============================================================================
 # 
 # cv2.imshow('img',imglist[-1][0])
@@ -97,7 +98,8 @@ callback = [
         save_weights_only=True,
         mode='auto'
     ),
-    EarlyStopping(patience = 2)
+    #Uncomment if you want to use EarlyStopping
+    # EarlyStopping(patience = 2)
     ]
 
 
